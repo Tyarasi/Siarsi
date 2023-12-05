@@ -1,0 +1,171 @@
+@extends('admin.master_admin')
+
+@section('home_admin')
+
+<style>
+  .preview-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1px;
+  }
+
+  .preview-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-basis: calc(20% - 10px); /* Atur lebar masing-masing kolom (33.33% untuk 3 kolom) */
+  }
+
+  .preview-video {
+    width: 150px;
+    height: 100px;
+    margin-right: 10px;
+  }
+
+  .preview-delete {
+    display: flex;
+    align-items: center;
+    color: red;
+    cursor: pointer;
+  }
+</style>
+
+<div class="card">
+  <div class="card-body">
+    <h5 class="card-title">Tambah Data Video</h5>
+
+    <!-- Vertical Form -->
+    <form class="row g-3" action="{{ route('StoreVideo')}}" method="POST" enctype="multipart/form-data">
+      @csrf
+      <div class="col-12">
+        <label class="form-label">Nama Video</label>
+        <input type="text" class="form-control" name="nama_video">
+        @if ($errors->has('nama_video'))
+          <span class="text-danger">
+            {{ $errors->first('nama_video') }}
+          </span>
+        @endif
+      </div>
+      <div class="col-12">
+        <label for="inputDate" class="col-sm-2 col-form-label">Kategori Foto</label>
+        <div class="col-sm-10">
+          <select class="form-select" aria-label="Default select example" name="id_kategori">
+            @foreach ($kategori as $ktgr)
+            <option value="{{$ktgr->id}}">{{ $ktgr->nama_kategori}}</option>
+            @endforeach
+          </select>
+          @if ($errors->has('id_kategori'))
+            <span class="text-danger">
+              {{ $errors->first('id_kategori') }}
+            </span>
+          @endif
+        </div>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Keterangan Video</label>
+        <textarea class="form-control" name="keterangan_video" style="height: 101px;"></textarea>
+        @if ($errors->has('keterangan_video'))
+          <span class="text-danger">
+            {{ $errors->first('keterangan_video') }}
+          </span>
+        @endif
+      </div>
+      <div class="col-12">
+        <label for="inputDate" class="col-sm-2 col-form-label">Tanggal Video</label>
+        <div class="col-sm-10">
+          <input type="date" class="form-control" name="tanggal_video">
+          @if ($errors->has('tanggal_video'))
+            <span class="text-danger">
+              {{ $errors->first('tanggal_video') }}
+            </span>
+          @endif
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div id="imagePreviewContainer" class="preview-container"></div>
+      </div>
+
+      <div class="col-12">
+        <input class="form-control" type="file" id="videoInput" name="video_dokumentasi[]" multiple>
+        @if ($errors->has('video_dokumentasi'))
+          <span class="text-danger">
+            {{ $errors->first('video_dokumentasi') }}
+          </span>
+        @elseif ($errors->has('video_dokumentasi.*'))
+          <span class="text-danger">
+            {{ $errors->first('video_dokumentasi.*') }}
+          </span>
+        @endif
+      </div>
+
+      <div class="text-right">
+        <button type="submit" class="btn btn-primary">Submit</button>
+        <button type="reset" class="btn btn-secondary">Kembali</a></button>
+      </div>
+    </form><!-- Vertical Form -->
+  </div>
+</div>
+
+<script>
+  var videoInput = document.getElementById('videoInput');
+  var videoPreviewContainer = document.getElementById('videoPreviewContainer');
+  var videoPreviewItems = [];
+
+  videoInput.addEventListener('change', function() {
+    videoPreviewContainer.innerHTML = '';
+
+    var files = this.files;
+    var fileArray = Array.from(files); // Konversi objek FileList menjadi array
+
+    for (var i = 0; i < fileArray.length; i++) {
+      var file = fileArray[i];
+
+      if (file) {
+        var reader = new FileReader();
+
+        reader.addEventListener('load', function(event) {
+          var previewItem = document.createElement('div');
+          previewItem.classList.add('preview-item');
+
+          var videoElement = document.createElement('video');
+          videoElement.src = event.target.result;
+          videoElement.classList.add('preview-video');
+          videoElement.controls = true;
+
+          var deleteButton = document.createElement('span');
+          deleteButton.classList.add('preview-delete');
+          deleteButton.innerHTML = '<i class="bi bi-trash"></i>';
+          deleteButton.addEventListener('click', function() {
+            previewItem.remove();
+            var index = videoPreviewItems.indexOf(previewItem);
+            if (index !== -1) {
+              fileArray.splice(index, 1); // Hapus file dari array
+            }
+            updateInputFiles(); // Perbarui elemen input file setelah menghapus
+          });
+
+          previewItem.appendChild(videoElement);
+          previewItem.appendChild(deleteButton);
+          videoPreviewContainer.appendChild(previewItem);
+          videoPreviewItems.push(previewItem); // Tambahkan elemen preview ke array
+        });
+
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function updateInputFiles() {
+      var newInputFiles = new DataTransfer(); // Buat objek DataTransfer baru
+      fileArray.forEach(function(file) {
+        newInputFiles.items.add(file); // Tambahkan file ke objek DataTransfer
+      });
+      videoInput.files = newInputFiles.files; // Perbarui files pada elemen input dengan objek DataTransfer yang diperbarui
+    }
+  });
+</script>
+
+
+
+
+@endsection
